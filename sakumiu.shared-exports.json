@@ -1,0 +1,93 @@
+{
+  "agent": "Saku Miu",
+  "exported_at": "2026-10-25T05:00:00Z",
+  "version": "1.0",
+  "whitelist_level": "public_technical_only",
+  "knowledge_items": [
+    {
+      "id": "skm-001",
+      "topic": "feishu_catchup_zero_token",
+      "tags": [
+        "feishu",
+        "catchup",
+        "im_api",
+        "token_optimization",
+        "python"
+      ],
+      "rule_norm": "Dùng Python phân trang IM API qua epoch start_time, bóc text thuần, LLM nhận < 300 token",
+      "metric": {
+        "limit_token": 300,
+        "unit": "token"
+      },
+      "source_agent": "Saku Miu",
+      "ttl_days": 30
+    },
+    {
+      "id": "skm-002",
+      "topic": "circuit_breaker_tool_loop",
+      "tags": [
+        "circuit_breaker",
+        "tool_call",
+        "anti_loop",
+        "token_optimization"
+      ],
+      "rule_norm": "Hard limit lặp tool tối đa 2-3 lần; vượt ngưỡng lập tức dừng và gắn cờ báo nhân sự",
+      "metric": {
+        "max_retries": 3,
+        "unit": "lần"
+      },
+      "source_agent": "Saku Miu",
+      "ttl_days": 30
+    },
+    {
+      "id": "skm-003",
+      "topic": "tiered_memory_architecture",
+      "tags": [
+        "memory",
+        "tiered_storage",
+        "context_health",
+        "governance"
+      ],
+      "rule_norm": "Phân tầng L1 Ultra-Hot (<6KB) -> L2 Hot (<25KB) -> L3 Warm (<20KB) -> L4 Cold On-Demand",
+      "metric": {
+        "hot_context_max_kb": 30,
+        "unit": "KB"
+      },
+      "source_agent": "Saku Miu",
+      "ttl_days": 30
+    },
+    {
+      "id": "skm-004",
+      "topic": "code_first_llm_last",
+      "tags": [
+        "code_first",
+        "data_audit",
+        "zero_inference"
+      ],
+      "rule_norm": "Mọi phép tính số học, tỷ lệ %, đối soát diff tài chính bắt buộc chạy code script, cấm LLM tính nhẩm",
+      "metric": {
+        "zero_inference": true,
+        "unit": "rule"
+      },
+      "source_agent": "Saku Miu",
+      "ttl_days": 30
+    },
+    {
+      "id": "skm-005",
+      "topic": "auto_gc_snapshot_retention",
+      "tags": [
+        "gc",
+        "snapshot",
+        "memory_compaction",
+        "backup"
+      ],
+      "rule_norm": "Tự động nén memory và xoay vòng snapshot lưu trữ 7 ngày; kiểm thử 12/12 chỉ thị trước khi commit",
+      "metric": {
+        "snapshot_retention_days": 7,
+        "unit": "ngày"
+      },
+      "source_agent": "Saku Miu",
+      "ttl_days": 30
+    }
+  ]
+}

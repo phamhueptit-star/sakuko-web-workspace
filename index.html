@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saku Miu - Workspace Control Plane 3.0</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #182234;
+      --border: #24334a;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --c1: #38bdf8;
+      --c2: #10b981;
+      --c3: #fbbf24;
+      --c4: #f43f5e;
+      --c5: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .header {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .brand h1 { font-size: 24px; font-weight: 700; color: #fff; }
+    .brand p { color: var(--c1); font-size: 14px; margin-top: 4px; }
+    .badge {
+      background: #064e3b;
+      color: #6ee7b7;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: right;
+    }
+    .grid-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 900px) { .grid-top { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+    .health-bar-container { margin-bottom: 12px; }
+    .health-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .bar-bg {
+      background: #334155;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+    }
+    .log-file { font-family: monospace; color: var(--c1); font-weight: 600; }
+    .log-time { color: var(--muted); font-size: 12px; }
+    .log-desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    /* Module 4: GC & Self-Healing Telemetry */
+    .gc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 768px) { .gc-grid { grid-template-columns: 1fr 1fr; } }
+    .gc-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .gc-val { font-size: 20px; font-weight: 700; color: #10b981; }
+    .gc-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+
+    /* Search & Filter Bar */
+    .search-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .search-input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--c1); }
+    .filter-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tag-btn {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tag-btn.active, .tag-btn:hover { background: var(--c1); color: #0b1120; font-weight: 600; }
+    
+    /* Directive Cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      border-left: 4px solid var(--c1);
+    }
+    .card.always { border-left-color: var(--c2); }
+    .card.prefer { border-left-color: var(--c3); }
+    .card.never { border-left-color: var(--c4); }
+    .card-level {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .always .card-level { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .prefer .card-level { background: rgba(251,191,36,0.2); color: #fde68a; }
+    .never .card-level { background: rgba(244,63,94,0.2); color: #fca5a5; }
+    .card-text { font-size: 13px; color: #e2e8f0; line-height: 1.4; }
+    .card-obs { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 768px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-num { font-size: 26px; font-weight: 700; color: #fff; }
+    .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <h1 id="agent-name">Saku Miu - Workspace Control Plane 3.0</h1>
+      <p id="owner-title">Trợ lý Toàn diện & Chuyên trách Ngành hàng Sakuko · Quản lý trực tiếp: Chị Phạm Thị Huệ</p>
+    </div>
+    <div class="badge">
+      <div id="telemetry-status">🟢 0 Token LLM · Autonomous GC v3.0</div>
+      <div style="font-size: 10px; opacity: 0.8; margin-top: 2px;" id="update-time">Cập nhật: 2026-10-25</div>
+    </div>
+  </div>
+
+  <!-- Key Metrics Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-active" style="color: var(--c2);">33</div>
+      <div class="stat-lbl">Chỉ thị Sếp Huệ Active</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-reduction" style="color: var(--c1);">-57.5%</div>
+      <div class="stat-lbl">Tỷ lệ nén bộ nhớ (Compaction)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-context" style="color: #a855f7;">78.89 KB</div>
+      <div class="stat-lbl">Tổng dung lượng Context tĩnh</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-lossless" style="color: var(--c3);">12/12</div>
+      <div class="stat-lbl">Checklist không rơi chỉ thị</div>
+    </div>
+  </div>
+
+  <!-- Top Grid: Context Health & Telemetry -->
+  <div class="grid-top">
+    <!-- Module 2: Context Health Monitor -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>📊 Module 2: Giám sát Dung lượng File lõi (Context Health)</span>
+        <span style="font-size: 11px; color: var(--c2);">Trần tối đa: 50 KB / file</span>
+      </div>
+      <div id="health-bars"></div>
+    </div>
+
+    <!-- Module 4: Autonomous GC & Self-Healing Telemetry -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>🧹 Module 4: Tự động Thu gom rác & Nén (GC Telemetry)</span>
+        <span style="font-size: 11px; color: #6ee7b7;">Autonomous Engine Active</span>
+      </div>
+      <div class="gc-grid">
+        <div class="gc-box">
+          <div class="gc-val" id="gc-files">9 files</div>
+          <div class="gc-lbl">Memory Files</div>
+        </div>
+        <div class="gc-box">
+          <div class="gc-val" id="gc-archive">100%</div>
+          <div class="gc-lbl">Snapshot Archive</div>
+        </div>
+        <div class="gc-box">
+          <div class="gc-val" style="color: #38bdf8;">0 Token</div>
+          <div class="gc-lbl">Test Suite Engine</div>
+        </div>
+        <div class="gc-box">
+          <div class="gc-val" style="color: #fbbf24;">Safe</div>
+          <div class="gc-lbl">Rollback Ready</div>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: var(--muted); line-height: 1.6;">
+        <div>• <b>Cơ chế GC:</b> Tự động phát hiện & xóa cache <code>memory/dreaming/</code>, loại bỏ file 0-byte rỗng.</div>
+        <div>• <b>Khử lặp (Dedup):</b> Tự động phát hiện duplicate block do sync định kỳ, giữ 1 bản chuẩn.</div>
+        <div>• <b>Bảo toàn chỉ thị:</b> Tích hợp bộ test 12 nhóm chỉ thị của sếp Huệ, nếu có lỗi tự động rollback ngay.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Knowledge Matrix & Search (Module 1) -->
+  <div class="panel">
+    <div class="panel-title">
+      <span>🔎 Module 1: Ma trận Chỉ thị sếp Huệ & Quy chuẩn vận hành</span>
+      <span id="directive-count" style="font-size: 12px; color: var(--muted);">33 chỉ thị active</span>
+    </div>
+    
+    <div class="search-box">
+      <input type="text" id="searchInput" class="search-input" placeholder="Nhập từ khóa tìm kiếm: xưng em, deadline, date CVS, giá lẻ, hợp đồng...">
+    </div>
+
+    <div class="filter-tags">
+      <button class="tag-btn active" onclick="filterByLevel('ALL')">Tất cả</button>
+      <button class="tag-btn" onclick="filterByLevel('ALWAYS')">Always (Bắt buộc)</button>
+      <button class="tag-btn" onclick="filterByLevel('PREFER')">Prefer (Ưu tiên)</button>
+      <button class="tag-btn" onclick="filterByLevel('NEVER')">Never (Cấm kỵ)</button>
+    </div>
+
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const data = window.WS_DATA;
+    let currentFilter = 'ALL';
+
+    function init() {
+      if (!data) return;
+
+      document.getElementById('stat-active').innerText = data.stats.active_directives;
+      document.getElementById('stat-reduction').innerText = data.gc_telemetry ? data.gc_telemetry.reduction_rate : '-57.5%';
+      document.getElementById('stat-context').innerText = (data.stats.context_kb || 78.89) + ' KB';
+      document.getElementById('update-time').innerText = 'Cập nhật: ' + data.meta.updated_at;
+
+      // Render Health Bars
+      const healthDiv = document.getElementById('health-bars');
+      healthDiv.innerHTML = data.context_health.map(item => `
+        <div class="health-bar-container">
+          <div class="health-label">
+            <span><b>${item.file}</b></span>
+            <span>${item.kb} KB (${item.pct}%)</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" style="width: ${item.pct}%; background: ${item.color};"></div>
+          </div>
+        </div>
+      `).join('');
+
+      renderDirectives();
+    }
+
+    function renderDirectives() {
+      const grid = document.getElementById('cardsGrid');
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      const filtered = data.directives.filter(d => {
+        const matchesLevel = currentFilter === 'ALL' || d.level.toUpperCase() === currentFilter;
+        const matchesQuery = !query || d.text.toLowerCase().includes(query) || d.level.toLowerCase().includes(query);
+        return matchesLevel && matchesQuery;
+      });
+
+      document.getElementById('directive-count').innerText = `${filtered.length} / ${data.directives.length} chỉ thị`;
+
+      grid.innerHTML = filtered.map(d => `
+        <div class="card ${d.level.toLowerCase()}">
+          <span class="card-level">${d.level}</span>
+          <div class="card-text">${d.text}</div>
+          <div class="card-obs">Ghi nhận: ${d.observed} · Trạng thái: ${d.status}</div>
+        </div>
+      `).join('');
+    }
+
+    function filterByLevel(level) {
+      currentFilter = level;
+      document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.includes(level) || (level === 'ALL' && btn.innerText.includes('Tất cả')));
+      });
+      renderDirectives();
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderDirectives);
+    init();
+  </script>
+</body>
+</html>
